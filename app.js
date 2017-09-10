@@ -10,7 +10,7 @@ function searchArtistByName(artistName, degree) {
     data: {
       q: artistName,
       type: 'artist'
-    }}));    
+    }}));
     artistPromise.then(function (response) {
       ARTISTIDS.push(response.artists.items[0].id);
       // check if artist has image if not assign placeholder
@@ -29,7 +29,7 @@ function searchArtistByName(artistName, degree) {
 function searchArtistById(artistId, degree) {
   var artistIdPromise = Promise.resolve($.ajax({
     url: 'https://api.spotify.com/v1/artists/' + artistId,
-    }));    
+    }));
     artistIdPromise.then(function (response) {
       if (ARTISTIDS.indexOf(this.id) == -1) {
         ARTISTIDS.push(response.id);
@@ -52,7 +52,7 @@ function searchRecommendations(artistId, degree) {
     data: {
       type: 'artist',
     }}));
-    
+
     recommendationsPromise.then(function (response) {
       if (degree < 1) {
         $(response.artists).each(function () {
@@ -61,7 +61,7 @@ function searchRecommendations(artistId, degree) {
             if (this.images.length > 0) {
               ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': this.images[0].url});
             } else {
-              ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': 'images/spotify.png'});  
+              ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': 'images/spotify.png'});
             }
             searchArtistById(this.id, degree+1);
           }
@@ -73,14 +73,14 @@ function searchRecommendations(artistId, degree) {
             if (this.images.length > 0) {
               ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': this.images[0].url});
             } else {
-              ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': 'images/spotify.png'});  
+              ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': 'images/spotify.png'});
             }
           }
         });
       } else {
         return;
       }
-    }); 
+    });
 }
 
 //Search for top tracks for artist by id and display for user
@@ -120,7 +120,29 @@ function printArtistName(ARTISTS) {
   });
 }
 
+function authorizeSpotify() {
+  var authPromise = Promise.resolve($.ajax({
+    type: 'POST',
+    crossDomain: true,
+    dataType: 'jsonp',
+    url: 'https://accounts.spotify.com/api/token',
+    headers: {
+      'Authorization': 'Basic 3a79ba9eeade49be95179e2a342fc061:2ccafc6d61bc48079a84656499cc47e2'
+    },
+    data: {
+      grant_type: 'client_credentials',
+    }}));
+    authPromise.then(function(response){
+      console.log(response);
+      return response;
+    });
+
+}
+
 $(document).ready(function() {
+  var authorization = authorizeSpotify();
+  console.log(authorization);
+
   $('form[name="artist-form"]').submit(function (e) {
     e.preventDefault();
     AUDIOOBJ.pause();
@@ -128,10 +150,10 @@ $(document).ready(function() {
     ARTISTIDS = [];
     $('.results').empty();
     $('.artistInfo').addClass('hidden');
-    
+
     var index,
         degree = 0;
-    
+
     searchArtistByName($(this).find('#artist-1-query').val(), degree);
 
     setTimeout (function () {
@@ -141,14 +163,14 @@ $(document).ready(function() {
   });
 
   //Play or pause the track user clicks on
-  $('.tracks').click(function(e) { 
+  $('.tracks').click(function(e) {
     if(AUDIOOBJ){
       AUDIOOBJ.pause();
     }
 
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       $('.tracksList').on('click touch', function(e){
-        $('iframe').remove(); //Remove all previous iframes. 
+        $('iframe').remove(); //Remove all previous iframes.
 
         var i = document.createElement('iframe');
         i.src =  $(this).attr('src');
