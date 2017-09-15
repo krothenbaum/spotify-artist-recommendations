@@ -4,14 +4,18 @@ var AUDIOOBJ = new Audio();
 
 
 //Search user submitted artist by name. Use top search result. Search recommended artists for user input.
-function searchArtistByName(artistName, degree) {
+function searchArtistByName(artistName, degree, token) {
   var artistPromise = Promise.resolve($.ajax({
     url: 'https://api.spotify.com/v1/search',
+    headers: {
+        'Authorization': 'Bearer ' + token
+    },
     data: {
       q: artistName,
       type: 'artist'
     }}));
     artistPromise.then(function (response) {
+      console.log(response);
       ARTISTIDS.push(response.artists.items[0].id);
       // check if artist has image if not assign placeholder
       if (response.artists.items[0].images.length > 0) {
@@ -19,16 +23,19 @@ function searchArtistByName(artistName, degree) {
       } else {
         ARTISTS.push({'name': response.artists.items[0].name, 'artistId': response.artists.items[0].id, 'imageURL': 'images/spotify.png'});
       }
-      searchRecommendations(response.artists.items[0].id, degree);
+      searchRecommendations(response.artists.items[0].id, degree, token);
     }, function (error) {
         console.error('uh oh: ', error);   // 'uh oh: something bad happened’
     });
 }
 
 //Search artists by Spotify Id and then search the related artists for each artist
-function searchArtistById(artistId, degree) {
+function searchArtistById(artistId, degree, token) {
   var artistIdPromise = Promise.resolve($.ajax({
     url: 'https://api.spotify.com/v1/artists/' + artistId,
+    headers: {
+        'Authorization': 'Bearer ' + token
+    },
     }));
     artistIdPromise.then(function (response) {
       if (ARTISTIDS.indexOf(this.id) == -1) {
@@ -46,9 +53,12 @@ function searchArtistById(artistId, degree) {
 }
 
 //Search for related artists. If not already in artist id array push them and then search artist by id if max degree has not been reached.
-function searchRecommendations(artistId, degree) {
+function searchRecommendations(artistId, degree, token) {
   var recommendationsPromise = Promise.resolve($.ajax({
     url: 'https://api.spotify.com/v1/artists/' + artistId + '/related-artists',
+    headers: {
+        'Authorization': 'Bearer ' + token
+    },
     data: {
       type: 'artist',
     }}));
@@ -63,7 +73,7 @@ function searchRecommendations(artistId, degree) {
             } else {
               ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': 'images/spotify.png'});
             }
-            searchArtistById(this.id, degree+1);
+            searchArtistById(this.id, degree+1, token);
           }
         });
       } else if (degree == 1) {
@@ -84,13 +94,17 @@ function searchRecommendations(artistId, degree) {
 }
 
 //Search for top tracks for artist by id and display for user
-function getTracks(artistId) {
+function getTracks(artistId, token) {
  var trackPromise = Promise.resolve($.ajax({
   url: 'https://api.spotify.com/v1/artists/' + artistId + '/top-tracks',
+  headers: {
+      'Authorization': 'Bearer ' + token
+  },
   data: {
-    country: 'US'
+    market: 'US'
   }}));
  trackPromise.then(function(response) {
+   console.log(response);
     var tracksHTML = '<div class="trackHeader"><div class="number">#</div><div class="song">Song</div></div>';
     var i = 0;
     var index = ARTISTS.findIndex(x => x.artistId == artistId);
@@ -107,7 +121,7 @@ function getTracks(artistId) {
   });
 }
 
-function printArtistName(ARTISTS) {
+function printArtistName(ARTISTS, token) {
   for (var i = 0; i < ARTISTS.length; i++) {
     $('.results').append('<div class="name" attr="'+ ARTISTS[i].artistId +'">' + ARTISTS[i].name + '</div>');
   }
@@ -116,32 +130,31 @@ function printArtistName(ARTISTS) {
     AUDIOOBJ.pause();
     $('.name').removeClass('selected');
     $(this).addClass('selected');
-    getTracks($(this).attr('attr'));
+    getTracks($(this).attr('attr'), token);
   });
 }
 
-function authorizeSpotify() {
-  var authPromise = Promise.resolve($.ajax({
-    type: 'POST',
-    crossDomain: true,
-    dataType: 'jsonp',
-    url: 'https://accounts.spotify.com/api/token',
-    headers: {
-      'Authorization': 'Basic 3a79ba9eeade49be95179e2a342fc061:2ccafc6d61bc48079a84656499cc47e2'
-    },
-    data: {
-      grant_type: 'client_credentials',
-    }}));
-    authPromise.then(function(response){
-      console.log(response);
-      return response;
+async function authorizeSpotify() {
+  let token;
+  try {
+    token = await $.ajax({
+      type: 'GET',
+      url: 'https://spotify-authentication-server.herokuapp.com/auth',
+      crossDomain: true
     });
-
+    return token.token;
+  } catch(e) {
+    console.log('ERROR: ' + JSON.stringify(e));
+  }
 }
 
 $(document).ready(function() {
-  var authorization = authorizeSpotify();
-  console.log(authorization);
+  // var authorization = authorizeSpotify();
+  // console.log(authorization);
+  authorizeSpotify().then(value => {
+    const token = value;
+  });
+
 
   $('form[name="artist-form"]').submit(function (e) {
     e.preventDefault();
@@ -154,11 +167,11 @@ $(document).ready(function() {
     var index,
         degree = 0;
 
-    searchArtistByName($(this).find('#artist-1-query').val(), degree);
+    searchArtistByName($(this).find('#artist-1-query').val(), degree, token);
 
     setTimeout (function () {
-      console.log(ARTISTS);
-      printArtistName(ARTISTS);
+      console.log(token);
+      printArtistName(ARTISTS, token);
     }, 2000);
   });
 
