@@ -15,7 +15,6 @@ function searchArtistByName(artistName, degree, token) {
       type: 'artist'
     }}));
     artistPromise.then(function (response) {
-      console.log(response);
       ARTISTIDS.push(response.artists.items[0].id);
       // check if artist has image if not assign placeholder
       if (response.artists.items[0].images.length > 0) {
@@ -38,7 +37,7 @@ function searchArtistById(artistId, degree, token) {
     },
     }));
     artistIdPromise.then(function (response) {
-      if (ARTISTIDS.indexOf(this.id) == -1) {
+      if (ARTISTIDS.indexOf(this.id) === -1) {
         ARTISTIDS.push(response.id);
         if (response.images.length > 0) {
           ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': response.images[0].url});
@@ -66,7 +65,7 @@ function searchRecommendations(artistId, degree, token) {
     recommendationsPromise.then(function (response) {
       if (degree < 1) {
         $(response.artists).each(function () {
-          if (ARTISTIDS.indexOf(this.id) == -1) {
+          if (ARTISTIDS.indexOf(this.id) === -1) {
             ARTISTIDS.push(this.id);
             if (this.images.length > 0) {
               ARTISTS.push({'name': this.name, 'artistId': this.id, 'imageURL': this.images[0].url});
