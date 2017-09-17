@@ -45,7 +45,7 @@ function searchArtistById(artistId, degree, token) {
         } else {
           ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': 'images/spotify.png'});
         }
-        searchRecommendations(response.id, degree);
+        searchRecommendations(response.id, degree, token);
       }
     }, function (error) {
         console.error('uh oh: ', error);   // 'uh oh: something bad happened’
@@ -101,7 +101,7 @@ function getTracks(artistId, token) {
       'Authorization': 'Bearer ' + token
   },
   data: {
-    market: 'US'
+    country: 'US'
   }}));
  trackPromise.then(function(response) {
    console.log(response);
@@ -151,8 +151,9 @@ async function authorizeSpotify() {
 $(document).ready(function() {
   // var authorization = authorizeSpotify();
   // console.log(authorization);
+  let token;
   authorizeSpotify().then(value => {
-    const token = value;
+    token = value;
   });
 
 
