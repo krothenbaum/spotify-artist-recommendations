@@ -15,7 +15,6 @@ function searchArtistByName(artistName, degree, token) {
       type: 'artist'
     }}));
     artistPromise.then(function (response) {
-      console.log(response);
       ARTISTIDS.push(response.artists.items[0].id);
       // check if artist has image if not assign placeholder
       if (response.artists.items[0].images.length > 0) {
@@ -38,15 +37,16 @@ function searchArtistById(artistId, degree, token) {
     },
     }));
     artistIdPromise.then(function (response) {
-      if (ARTISTIDS.indexOf(this.id) == -1) {
-        ARTISTIDS.push(response.id);
-        if (response.images.length > 0) {
-          ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': response.images[0].url});
-        } else {
-          ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': 'images/spotify.png'});
-        }
+
+      // if (ARTISTIDS.indexOf(response.id) == -1) {
+      //   ARTISTIDS.push(response.id);
+      //   if (response.images.length > 0) {
+      //     ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': response.images[0].url});
+      //   } else {
+      //     ARTISTS.push({'name': response.name, 'artistId': response.id, 'imageURL': 'images/spotify.png'});
+      //   }
         searchRecommendations(response.id, degree, token);
-      }
+      // }
     }, function (error) {
         console.error('uh oh: ', error);   // 'uh oh: something bad happened’
     });
@@ -62,7 +62,6 @@ function searchRecommendations(artistId, degree, token) {
     data: {
       type: 'artist',
     }}));
-
     recommendationsPromise.then(function (response) {
       if (degree < 1) {
         $(response.artists).each(function () {
@@ -90,6 +89,8 @@ function searchRecommendations(artistId, degree, token) {
       } else {
         return;
       }
+    }, function (error) {
+      console.log('uh oh: ', error);
     });
 }
 
@@ -104,7 +105,6 @@ function getTracks(artistId, token) {
     country: 'US'
   }}));
  trackPromise.then(function(response) {
-   console.log(response);
     var tracksHTML = '<div class="trackHeader"><div class="number">#</div><div class="song">Song</div></div>';
     var i = 0;
     var index = ARTISTS.findIndex(x => x.artistId == artistId);
@@ -121,7 +121,7 @@ function getTracks(artistId, token) {
   });
 }
 
-function printArtistName(ARTISTS, token) {
+function printArtistName(token) {
   for (var i = 0; i < ARTISTS.length; i++) {
     $('.results').append('<div class="name" attr="'+ ARTISTS[i].artistId +'">' + ARTISTS[i].name + '</div>');
   }
@@ -149,8 +149,6 @@ async function authorizeSpotify() {
 }
 
 $(document).ready(function() {
-  // var authorization = authorizeSpotify();
-  // console.log(authorization);
   let token;
   authorizeSpotify().then(value => {
     token = value;
@@ -160,8 +158,8 @@ $(document).ready(function() {
   $('form[name="artist-form"]').submit(function (e) {
     e.preventDefault();
     AUDIOOBJ.pause();
-    ARTISTS = [];
-    ARTISTIDS = [];
+    // ARTISTS = [];
+    // ARTISTIDS = [];
     $('.results').empty();
     $('.artistInfo').addClass('hidden');
 
@@ -171,8 +169,7 @@ $(document).ready(function() {
     searchArtistByName($(this).find('#artist-1-query').val(), degree, token);
 
     setTimeout (function () {
-      console.log(token);
-      printArtistName(ARTISTS, token);
+      printArtistName(token);
     }, 2000);
   });
 
@@ -189,7 +186,6 @@ $(document).ready(function() {
         var i = document.createElement('iframe');
         i.src =  $(this).attr('src');
         $(this).append(i);
-        console.log(this);
       });
     } else {
       AUDIOOBJ.setAttribute('src', $(e.target).closest('.tracksList').attr('src'));
